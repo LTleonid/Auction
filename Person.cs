@@ -10,21 +10,22 @@
 
         public void SubscribeForEvent(AuctionItem item)
         {
-            item.AuctionEnded += (state) =>
+            item.AuctionEnded += (sender, e) =>
             {
-                AuctionEndedNotification?.Invoke(this, $"Auction '[{item.Id}]|{item.Name}' Ended!");
+                ShowNotification(item, $"Auction '[{item.Id}]|{item.Name}' ended");
             };
 
-            item.PriceChanged += (newPrice) =>
+            item.PriceChanged += (sender, newPrice) =>
             {
-                PriceChangedNotification?.Invoke(this, $"Change Price in '[{item.Id}]|{item.Name}': {newPrice}");
+                ShowNotification(item, $"New price: {newPrice}");
             };
-
         }
+
 
         public void ShowNotification(AuctionItem sender, string message)
         {
-            Console.WriteLine($"[{sender.Name}] {message}");
+            Console.WriteLine($"[Person {Id}] | [{sender.Name}] {message}");
         }
+
     }
 }

@@ -5,15 +5,17 @@ namespace ConsoleApp29
 
     public class AuctionItem
     {
-
+        //Events
+        public event EventHandler AuctionEnded;
+        public event EventHandler<decimal> PriceChanged;
 
         //Product Info
         public int Id { get; set; }
         public string Name { get; set; }
         public AuctionState State { get; set; }
         public System.Timers.Timer Timer { get; set; }
-        public event TimerCallback AuctionEnded;
-        public event PriceChangedEvent PriceChanged;
+        
+
         //Price field 
         public decimal Start_price { get; set; }
         public decimal Current_price { get; set; }
@@ -34,8 +36,9 @@ namespace ConsoleApp29
             Seller = seller;
             Buyer = buyer;
             Timer = timer;
+            _lock = new object();
+            Bidders = new List<Person>();
         }
-        //Create for Auc
         public AuctionItem(int id, string name, AuctionState state, decimal start_price, Person seller, TimeSpan duration)
         {
             Id = id;
@@ -46,14 +49,17 @@ namespace ConsoleApp29
             End_price = null;
             Seller = seller;
             Buyer = null;
+            _lock = new object();
+            Bidders = new List<Person>();
 
             Timer = new System.Timers.Timer(duration.TotalMilliseconds);
             Timer.AutoReset = false;
-            Timer.Elapsed += (sender, e) =>
+            Timer.Elapsed += (s, e) =>
             {
                 State = AuctionState.Ended;
-                AuctionEnded?.Invoke(sender);
+                AuctionEnded?.Invoke(this, EventArgs.Empty);
             };
+
             Timer.Start();
         }
         public bool setPrice(Person person, decimal price)
@@ -61,14 +67,17 @@ namespace ConsoleApp29
             lock (_lock)
             {
                 if (price < Current_price) return false;
-                if (!Bidders.Contains(person)) Bidders.Add(person);
+
+                if (!Bidders.Contains(person))
+                    Bidders.Add(person);
+
                 Current_price = price;
 
-                PriceChanged?.Invoke(Current_price);
-
+                PriceChanged?.Invoke(this, Current_price);
                 return true;
             }
         }
+
 
     }
 

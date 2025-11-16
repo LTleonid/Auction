@@ -28,10 +28,6 @@
                 var index = Auctions.Count;
 
                 var item = new AuctionItem(index, name, AuctionState.Started, price, player, duration);
-                item.AuctionEnded += (s) =>
-                {
-                    Console.WriteLine($"Аукцион [{item.Id}]{item.Name} завершён!");
-                };
 
                 Auctions.Add(item);
 
@@ -46,11 +42,16 @@
         public async Task<string> MakeBid(Person person, int id, int price)
         {
             var AList = await Task.Run(GetActiveAuctions);
-            var Item = AList[id];
-            if (!Item.setPrice(person, price)) return "need more";
-            return "Success";
+            var item = AList[id];
 
+            person.SubscribeForEvent(item);
+
+            if (!item.setPrice(person, price))
+                return "need more";
+
+            return "Success";
         }
+
         public static async Task<IReadOnlyList<AuctionItem>> GetActiveAuctions()
         {
             Reader.EnterReadLock();
