@@ -57,7 +57,7 @@
             Reader.EnterReadLock();
             try
             {
-                return Auctions;
+                return Auctions.Where(x => x.State == AuctionState.Started).ToList();
             }
             finally { Reader.ExitReadLock(); }
         }

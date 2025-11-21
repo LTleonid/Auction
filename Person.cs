@@ -5,8 +5,8 @@
         public int Id { get; set; }
         public string Name { get; set; }
 
-        public event EventHandler<string> AuctionEndedNotification;
-        public event EventHandler<string> PriceChangedNotification;
+        public event EventHandler<string>? AuctionEndedNotification;
+        public event EventHandler<string>? PriceChangedNotification;
 
         public void SubscribeForEvent(AuctionItem item)
         {
@@ -21,11 +21,22 @@
             };
         }
 
-
-        public void ShowNotification(AuctionItem sender, string message)
+        public void UnSubscribeForEvent(AuctionItem item)
         {
-            Console.WriteLine($"[Person {Id}] | [{sender.Name}] {message}");
+            item.AuctionEnded -= (sender, e) =>
+            {
+                ShowNotification(item, $"Auction '[{item.Id}]|{item.Name}' ended");
+            };
+            item.PriceChanged -= (sender, newPrice) =>
+            {
+                ShowNotification(item, $"New price: {newPrice}");
+            };
         }
 
+        public void ShowNotification(AuctionItem sender, string message)
+        { 
+            AuctionEndedNotification?.Invoke(this, message);
+            PriceChangedNotification?.Invoke(this, message);
+        }
     }
 }
