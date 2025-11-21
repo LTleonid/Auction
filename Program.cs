@@ -8,7 +8,16 @@ namespace ConsoleApp29
     internal class Program
     {
         static AuctionHouse auctionHouse = new AuctionHouse();
-        static Person me = new Person { Id = 1, Name = "Player" };
+        static List<Person> users = new()
+        {
+            new Person { Id = 1, Name = "Player1" },
+            new Person { Id = 2, Name = "Player2" },
+            new Person { Id = 3, Name = "Player3" }
+        };
+
+        static int currentUserIndex = 0;
+
+        static Person CurrentUser => users[currentUserIndex];
 
         static int selectedIndex = 0;
 
@@ -22,13 +31,13 @@ namespace ConsoleApp29
         {
             Console.CursorVisible = false;
 
-            await auctionHouse.PlaceBidAsync(me, 100, "Laptop", TimeSpan.FromMinutes(5));
-            await auctionHouse.PlaceBidAsync(me, 500, "iPhone", TimeSpan.FromMinutes(4));
-            await auctionHouse.PlaceBidAsync(me, 50, "Mouse", TimeSpan.FromMinutes(3));
-            await auctionHouse.PlaceBidAsync(me, 200, "Keyboard", TimeSpan.FromMinutes(6));
+            await auctionHouse.PlaceBidAsync(CurrentUser, 100, "Laptop", TimeSpan.FromMinutes(5));
+            await auctionHouse.PlaceBidAsync(CurrentUser, 500, "iPhone", TimeSpan.FromMinutes(4));
+            await auctionHouse.PlaceBidAsync(CurrentUser, 50, "Mouse", TimeSpan.FromMinutes(3));
+            await auctionHouse.PlaceBidAsync(CurrentUser, 200, "Keyboard", TimeSpan.FromMinutes(6));
 
-            me.AuctionEndedNotification += NotificationHandler;
-            me.PriceChangedNotification += NotificationHandler;
+            CurrentUser.AuctionEndedNotification += NotificationHandler;
+            CurrentUser.PriceChangedNotification += NotificationHandler;
 
             while (true)
             {
@@ -60,6 +69,11 @@ namespace ConsoleApp29
                         Console.Clear();
                         Console.CursorVisible = true;
                         return;
+
+                    case ConsoleKey.Tab:
+                        SwitchUser();
+                        break;
+
                 }
             }
         }
@@ -70,6 +84,11 @@ namespace ConsoleApp29
         {
             Console.Clear();
             int Center = Console.WindowWidth / 2;
+
+            Console.SetCursorPosition(2, 0);
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.Write($"User: {CurrentUser.Name}");
+            Console.ResetColor();
 
             Console.SetCursorPosition(2, 1);
             Console.ForegroundColor = ConsoleColor.Cyan;
@@ -110,7 +129,7 @@ namespace ConsoleApp29
 
         static void DrawShortKeys()
         {
-            string Text = "Space: Choice | N: Create bid | Arrows: controlling | ESC: Return";
+            string Text = "Space: Choice | N: Create bid | Arrows: controlling | ESC: Return | Tab: Switch User";
             int w = Console.WindowWidth;
             int startX = (Console.WindowWidth - Text.Length) /2;
             int startY = Console.WindowHeight - 1;
@@ -151,8 +170,26 @@ namespace ConsoleApp29
                 Console.Write(msg.PadRight(w));
             }
         }
+
+        static void SwitchUser()
+        {
+
+            CurrentUser.AuctionEndedNotification -= NotificationHandler;
+            CurrentUser.PriceChangedNotification -= NotificationHandler;
+
+            currentUserIndex = (currentUserIndex + 1) % users.Count;
+
+            CurrentUser.AuctionEndedNotification += NotificationHandler;
+            CurrentUser.PriceChangedNotification += NotificationHandler;
+
+            myBids.Clear(); 
+            notifications.Clear();
+            AddNotification($"Switched to user: {CurrentUser.Name}");
+        }
+
+
         #endregion
-        
+
         #region Notification
         static void AddNotification(string msg)
         {
@@ -178,7 +215,7 @@ namespace ConsoleApp29
 
             if (val == null) return;
 
-            var res = await auctionHouse.MakeBid(me, item.Id, (int)val);
+            var res = await auctionHouse.MakeBid(CurrentUser, item.Id, (int)val);
 
             if (!myBids.Contains(item))
                 myBids.Add(item);
@@ -203,7 +240,7 @@ namespace ConsoleApp29
             );
             if (minutes == null) return;
 
-            await auctionHouse.PlaceBidAsync(me, price.Value, name, TimeSpan.FromMinutes((double)minutes));
+            await auctionHouse.PlaceBidAsync(CurrentUser, price.Value, name, TimeSpan.FromMinutes((double)minutes));
             AddNotification($"Created auction '{name}'");
         }
         #endregion
