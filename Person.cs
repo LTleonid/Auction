@@ -10,14 +10,20 @@
 
         public void SubscribeForEvent(AuctionItem item)
         {
-            item.AuctionEnded += (sender, e) =>
+            item.AuctionEnded += async (sender, e) =>
             {
-                ShowNotification(item, $"Auction '[{item.Id}]|{item.Name}' ended");
+                await Task.Run(() =>
+                {
+                    ShowNotification(item, $"Auction '[{item.Id}]|{item.Name}' ended", false);
+                });
             };
 
-            item.PriceChanged += (sender, newPrice) =>
+            item.PriceChanged += async (sender, newPrice) =>
             {
-                ShowNotification(item, $"New price: {newPrice}");
+                await Task.Run(() =>
+                {
+                    ShowNotification(item, $"New price: {newPrice}", true);
+                });
             };
         }
 
@@ -25,18 +31,24 @@
         {
             item.AuctionEnded -= (sender, e) =>
             {
-                ShowNotification(item, $"Auction '[{item.Id}]|{item.Name}' ended");
+                ShowNotification(item, $"Auction '[{item.Id}]|{item.Name}' ended", false);
             };
             item.PriceChanged -= (sender, newPrice) =>
             {
-                ShowNotification(item, $"New price: {newPrice}");
+                ShowNotification(item, $"New price: {newPrice}", true);
             };
         }
 
-        public void ShowNotification(AuctionItem sender, string message)
-        { 
-            AuctionEndedNotification?.Invoke(this, message);
-            PriceChangedNotification?.Invoke(this, message);
+        public void ShowNotification(AuctionItem sender, string message, bool isPriceChange)
+        {
+            if (isPriceChange)
+            {
+                PriceChangedNotification?.Invoke(this, message);
+            }
+            else
+            {
+                AuctionEndedNotification?.Invoke(this, message);
+            }
         }
     }
 }

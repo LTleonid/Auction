@@ -22,29 +22,30 @@
 
         public async Task<BidResult> PlaceBidAsync(Person player, decimal price, string name, TimeSpan duration)
         {
-            Reader.EnterWriteLock();
-            try
+            return await Task.Run(() =>
             {
-                var index = Auctions.Count;
+                Reader.EnterWriteLock();
+                try
+                {
+                    var index = Auctions.Count;
 
-                var item = new AuctionItem(index, name, AuctionState.Started, price, player, duration);
+                    var item = new AuctionItem(index, name, AuctionState.Started, price, player, duration);
 
-                Auctions.Add(item);
+                    Auctions.Add(item);
 
-                return new BidResult(item.State, item.Start_price, item.Timer);
-            }
-            finally
-            {
-                Reader.ExitWriteLock();
-            }
+                    return new BidResult(item.State, item.Start_price, item.Timer);
+                }
+                finally
+                {
+                    Reader.ExitWriteLock();
+                }
+            });
         }
 
         public async Task<string> MakeBid(Person person, int id, int price)
         {
             var AList = await Task.Run(GetActiveAuctions);
             var item = AList[id];
-
-            person.SubscribeForEvent(item);
 
             if (!item.setPrice(person, price))
                 return "need more";

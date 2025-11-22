@@ -76,7 +76,10 @@ namespace ConsoleApp29
                 if (price < Current_price) return false;
 
                 if (!Bidders.Contains(person))
+                {
+                    person.SubscribeForEvent(this);
                     Bidders.Add(person);
+                }
 
                 Current_price = price;
 
